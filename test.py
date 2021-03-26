@@ -1,28 +1,57 @@
 import cv2
+import dlib
 
-# Load the cascade
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-# To capture video from webcam.
 cap = cv2.VideoCapture(0)
-# To use a video file as input
-# cap = cv2.VideoCapture('filename.mp4')
+
+hog = dlib.get_frontal_face_detector()
+
+face_landmark = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 while True:
-    # Read the frame
     _, img = cap.read()
-    # Convert to grayscale
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Detect the faces
-    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-    # Draw the rectangle around each face
-    for (x, y, w, h) in faces:
-        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
-    # Display
+
+    faces = hog(gray)
+    for face in faces:
+
+        landmarks = face_landmark(gray, face)
+
+        def left_brow():
+            for n in range(18, 22):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(img, (x, y), 1, (0, 255, 255), 1)
+
+        def right_brow():
+            for n in range(23, 27):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(img, (x, y), 1, (0, 255, 255), 1)
+
+        def eyes():
+            for n in range(37, 48):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(img, (x, y), 1, (0, 255, 255), 1)
+
+        def mouth():
+            for n in range(49, 68):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(img, (x, y), 1, (0, 255, 255), 1)
+
+        left_brow()
+        right_brow()
+        eyes()
+        mouth()
+
     cv2.imshow('img', img)
-    # Stop if escape key is pressed
-    k = cv2.waitKey(30) & 0xff
+
+    k = cv2.waitKey(1)
     if k == 27:
         break
-# Release the VideoCapture object
+
 cap.release()
