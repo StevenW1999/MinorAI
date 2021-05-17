@@ -1,18 +1,20 @@
 import cv2
 import dlib
+import numpy as np
 import pandas as pd
 
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 cap = cv2.VideoCapture(0)
+image = cv2.imread('paul.png')
 
 hog = dlib.get_frontal_face_detector()
 
 face_landmark = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 while True:
-    _, img = cap.read()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cap
+    gray = cv2.cvtColor(cv2.UMat(img), cv2.COLOR_BGR2GRAY)
 
     faces = hog(gray)
     for face in faces:
