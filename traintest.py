@@ -5,11 +5,15 @@ import numpy as np
 import glob
 from shutil import copyfile
 import math
+import time
+import pandas as pd
+import os
 
 from jupyterlab_widgets import data
 from sklearn.svm import SVC
 
 detector = dlib.get_frontal_face_detector()
+
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 def get_landmarks(image):
@@ -42,8 +46,8 @@ def get_landmarks(image):
         data['landmarks_vestorised'] = "error"
 
 
-emotions = ["neutral", "anger", "happy", "sadness"]  # Define emotion order
-participants = glob.glob("source_emotion\\*")  # Returns a list of all folders with participant numbers
+emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]  # Define emotion order
+participants = glob.glob("CK+48\\*")  # Returns a list of all folders with participant numbers
 
 for x in participants:
     part = "%s" % x[-4:]  # store current participant number
@@ -55,9 +59,9 @@ for x in participants:
             emotion = int(
                 float(file.readline()))  # emotions are encoded as a float, readline as float, then convert to integer.
 
-            sourcefile_emotion = glob.glob("source_images\\%s\\%s\\*" % (part, current_session))[
+            sourcefile_emotion = glob.glob("CK+48\\%s\\%s\\*" % (part, current_session))[
                 -1]  # get path for last image in sequence, which contains the emotion
-            sourcefile_neutral = glob.glob("source_images\\%s\\%s\\*" % (part, current_session))[
+            sourcefile_neutral = glob.glob("CK+48\\%s\\%s\\*" % (part, current_session))[
                 0]  # do same for neutral image
 
             dest_neut = "sorted_set\\neutral\\%s" % sourcefile_neutral[25:]  # Generate path to put neutral image
@@ -72,11 +76,11 @@ faceDet_two = cv2.CascadeClassifier("haarcascade_frontalface_alt2.xml")
 faceDet_three = cv2.CascadeClassifier("haarcascade_frontalface_alt.xml")
 faceDet_four = cv2.CascadeClassifier("haarcascade_frontalface_alt_tree.xml")
 
-emotions = ["neutral", "anger", "happy", "sadness"]  # Define emotions
+emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]  # Define emotions
 
 
 def detect_faces(emotion):
-    t_files = glob.glob("sorted_set\\%s\\*" % emotion)  # Get list of all images with emotion
+    t_files = glob.glob("CK+48\\%s\\*" % emotion)  # Get list of all images with emotion
 
     filenumber = 0
     for f in t_files:
@@ -112,7 +116,7 @@ def detect_faces(emotion):
 
             try:
                 out = cv2.resize(gray, (350, 350))  # Resize face so all images have same size
-                cv2.imwrite("dataset\\%s\\%s.jpg" % (emotion, filenumber), out)  # Write image
+                cv2.imwrite("datasets\\%s\\%s.jpg" % (emotion, filenumber), out)  # Write image
             except:
                 pass  # If error, pass file
         filenumber += 1  # Increment image number
@@ -121,69 +125,69 @@ def detect_faces(emotion):
 for emotion in emotions:
     detect_faces(emotion)  # Call functiona
 
-# data = {}
-# emotions = ["neutral", "anger", "happy", "sadness"]
-# fishface = cv2.face.FisherFaceRecognizer_create() #createFisherFaceRecognizer() #Initialize fisher face classifier
-#
-# def get_files(emotion):  # Define function to get file list, randomly shuffle it and split 80/20
-#     a_files = glob.glob("dataset\\%s\\*" % emotion)
-#     random.shuffle(a_files)
-#     training = a_files[:int(len(a_files) * 0.8)]  # get first 80% of file list
-#     prediction = a_files[-int(len(a_files) * 0.2):]  # get last 20% of file list
-#     return training, prediction
+data = {}
+emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]
+fishface = cv2.face.FisherFaceRecognizer_create() #createFisherFaceRecognizer() #Initialize fisher face classifier
 
-#
-# def make_sets():
-#     training_data = []
-#     training_labels = []
-#     prediction_data = []
-#     prediction_labels = []
-#     for nemotion in emotions:
-#         training, prediction = get_files(nemotion)
-#         # Append data to training and prediction list, and generate labels 0-7
-#         for item in training:
-#             image = cv2.imread(item)  # open image
-#             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # convert to grayscale
-#             training_data.append(gray)  # append image array to training data list
-#             training_labels.append(emotions.index(nemotion))
-#
-#         for item in prediction:  # repeat above process for prediction set
-#             image = cv2.imread(item)
-#             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-#             prediction_data.append(gray)
-#             prediction_labels.append(emotions.index(nemotion))
-#
-#     return training_data, training_labels, prediction_data, prediction_labels
-#
-# def run_recognizer():
-#     training_data, training_labels, prediction_data, prediction_labels = make_sets()
-#
-#     print("training fisher face classifier")
-#     print("size of training set is:", len(training_labels), "images")
-#     fishface.train(training_data, np.asarray(training_labels))
-#
-#     print("predicting classification set")
-#     cnt = 0
-#     ncorrect = 0
-#     incorrect = 0
-#     for image in prediction_data:
-#         pred, conf = fishface.predict(image)
-#         if pred == prediction_labels[cnt]:
-#             ncorrect += 1
-#             cnt += 1
-#         else:
-#             cv2.imwrite("dataset\\difficult\\%s_%s_%s.jpg" % (emotions[prediction_labels[cnt]], emotions[pred], cnt),
-#                         image)  # <-- this one is new
-#             incorrect += 1
-#             cnt += 1
-#     return ((100 * ncorrect) / (ncorrect + incorrect))
-#
-#
-# # Now run it
-# metascore = []
-# for i in range(0, 10):
-#     correct = run_recognizer()
-#     print("got", correct, "percent correct!")
-#     metascore.append(correct)
-#
-# print("\n\nend score:", np.mean(metascore), "percent correct!")
+def get_files(emotion):  # Define function to get file list, randomly shuffle it and split 80/20
+    a_files = glob.glob("datasets\\%s\\*" % emotion)
+    random.shuffle(a_files)
+    training = a_files[:int(len(a_files) * 0.8)]  # get first 80% of file list
+    prediction = a_files[-int(len(a_files) * 0.2):]  # get last 20% of file list
+    return training, prediction
+
+
+def make_sets():
+    training_data = []
+    training_labels = []
+    prediction_data = []
+    prediction_labels = []
+    for nemotion in emotions:
+        training, prediction = get_files(nemotion)
+        # Append data to training and prediction list, and generate labels 0-7
+        for item in training:
+            image = cv2.imread(item)  # open image
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # convert to grayscale
+            training_data.append(gray)  # append image array to training data list
+            training_labels.append(emotions.index(nemotion))
+
+        for item in prediction:  # repeat above process for prediction set
+            image = cv2.imread(item)
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            prediction_data.append(gray)
+            prediction_labels.append(emotions.index(nemotion))
+
+    return training_data, training_labels, prediction_data, prediction_labels
+
+def run_recognizer():
+    training_data, training_labels, prediction_data, prediction_labels = make_sets()
+
+    print("training fisher face classifier")
+    print("size of training set is:", len(training_labels), "images")
+    fishface.train(training_data, np.asarray(training_labels))
+
+    print("predicting classification set")
+    cnt = 0
+    ncorrect = 0
+    incorrect = 0
+    for image in prediction_data:
+        pred, conf = fishface.predict(image)
+        if pred == prediction_labels[cnt]:
+            ncorrect += 1
+            cnt += 1
+        else:
+            cv2.imwrite("dataset\\difficult\\%s_%s_%s.jpg" % (emotions[prediction_labels[cnt]], emotions[pred], cnt),
+                        image)  # <-- this one is new
+            incorrect += 1
+            cnt += 1
+    return ((100 * ncorrect) / (ncorrect + incorrect))
+
+
+# Now run it
+metascore = []
+for i in range(0, 10):
+    correct = run_recognizer()
+    print("got", correct, "percent correct!")
+    metascore.append(correct)
+
+print("\n\nend score:", np.mean(metascore), "percent correct!")
