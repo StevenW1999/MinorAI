@@ -5,19 +5,19 @@ import numpy as np
 import glob
 from shutil import copyfile
 import math
-import time
 import pandas as pd
-import os
-
 from jupyterlab_widgets import data
-from sklearn.svm import SVC
+import os
+from sklearn.neighbors import KNeighborsClassifier
 
 detector = dlib.get_frontal_face_detector()
-
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+emotions = ['anger', 'contempt', 'happy', 'sadness']
+
 
 def get_landmarks(image):
     detections = detector(image, 1)
+    landmarks = []
     for k, d in enumerate(detections):  # For all detected face instances individually
         shape = predictor(image, d)  # Draw Facial Landmarks with the predictor class
         xlist = []
@@ -25,169 +25,161 @@ def get_landmarks(image):
         for i in range(1, 68):  # Store X and Y coordinates in two lists
             xlist.append(float(shape.part(i).x))
             ylist.append(float(shape.part(i).y))
+        landmarks.append({'face_x': xlist, 'face_y': ylist})
 
-        xmean = np.mean(xlist)  # Find both coordinates of centre of gravity
-        ymean = np.mean(ylist)
-        xcentral = [(x - xmean) for x in xlist]  # Calculate distance centre <-> other points in both axes
-        ycentral = [(y - ymean) for y in ylist]
+    return landmarks
 
-        landmarks_vectorised = []
-        for x, y, w, z in zip(xcentral, ycentral, xlist, ylist):
-            landmarks_vectorised.append(w)
-            landmarks_vectorised.append(z)
-            meannp = np.asarray((ymean, xmean))
-            coornp = np.asarray((z, w))
-            dist = np.linalg.norm(coornp - meannp)
-            landmarks_vectorised.append(dist)
-            landmarks_vectorised.append((math.atan2(y, x) * 360) / (2 * math.pi))
-
-        data['landmarks_vectorised'] = landmarks_vectorised
-    if len(detections) < 1:
-        data['landmarks_vestorised'] = "error"
-
-
-emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]  # Define emotion order
-participants = glob.glob("CK+48\\*")  # Returns a list of all folders with participant numbers
-
-for x in participants:
-    part = "%s" % x[-4:]  # store current participant number
-    for sessions in glob.glob("%s\\*" % x):  # Store list of sessions for current participant
-        for files in glob.glob("%s\\*" % sessions):
-            current_session = files[20:-30]
-            file = open(files, 'r')
-
-            emotion = int(
-                float(file.readline()))  # emotions are encoded as a float, readline as float, then convert to integer.
-
-            sourcefile_emotion = glob.glob("CK+48\\%s\\%s\\*" % (part, current_session))[
-                -1]  # get path for last image in sequence, which contains the emotion
-            sourcefile_neutral = glob.glob("CK+48\\%s\\%s\\*" % (part, current_session))[
-                0]  # do same for neutral image
-
-            dest_neut = "sorted_set\\neutral\\%s" % sourcefile_neutral[25:]  # Generate path to put neutral image
-            dest_emot = "sorted_set\\%s\\%s" % (
-            emotions[emotion], sourcefile_emotion[25:])  # Do same for emotion containing image
-
-            copyfile(sourcefile_neutral, dest_neut)  # Copy file
-            copyfile(sourcefile_emotion, dest_emot)  # Copy file
 
 faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 faceDet_two = cv2.CascadeClassifier("haarcascade_frontalface_alt2.xml")
 faceDet_three = cv2.CascadeClassifier("haarcascade_frontalface_alt.xml")
 faceDet_four = cv2.CascadeClassifier("haarcascade_frontalface_alt_tree.xml")
 
-emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]  # Define emotions
 
+def detect_face(img_path):
+    frame = cv2.imread(img_path)  # Open image
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale
 
-def detect_faces(emotion):
-    t_files = glob.glob("CK+48\\%s\\*" % emotion)  # Get list of all images with emotion
-
-    filenumber = 0
-    for f in t_files:
-        frame = cv2.imread(f)  # Open image
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale
-
-        # Detect face using 4 different classifiers
-        face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
-                                        flags=cv2.CASCADE_SCALE_IMAGE)
-        face_two = faceDet_two.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
+    face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
+                                    flags=cv2.CASCADE_SCALE_IMAGE)
+    face_two = faceDet_two.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
+                                            flags=cv2.CASCADE_SCALE_IMAGE)
+    face_three = faceDet_three.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
                                                 flags=cv2.CASCADE_SCALE_IMAGE)
-        face_three = faceDet_three.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
-                                                    flags=cv2.CASCADE_SCALE_IMAGE)
-        face_four = faceDet_four.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
-                                                  flags=cv2.CASCADE_SCALE_IMAGE)
+    face_four = faceDet_four.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
+                                              flags=cv2.CASCADE_SCALE_IMAGE)
 
-        # Go over detected faces, stop at first detected face, return empty if no face.
-        if len(face) == 1:
-            facefeatures = face
-        elif len(face_two) == 1:
-            facefeatures = face_two
-        elif len(face_three) == 1:
-            facefeatures = face_three
-        elif len(face_four) == 1:
-            facefeatures = face_four
+    # Go over detected faces, stop at first detected face, return empty if no face.
+    if len(face) == 1:
+        facefeatures = face
+    elif len(face_two) == 1:
+        facefeatures = face_two
+    elif len(face_three) == 1:
+        facefeatures = face_three
+    elif len(face_four) == 1:
+        facefeatures = face_four
+    else:
+        facefeatures = ""
+
+    for (x, y, w, h) in facefeatures:  # get coordinates and size of rectangle containing face
+        if facefeatures == "":
+            pass
         else:
-            facefeatures = ""
-
-        # Cut and save face
-        for (x, y, w, h) in facefeatures:  # get coordinates and size of rectangle containing face
-            print("face found in file: %s" % f)
+            print("face found in file: %s" % img_path)
             gray = gray[y:y + h, x:x + w]  # Cut the frame to size
 
-            try:
-                out = cv2.resize(gray, (350, 350))  # Resize face so all images have same size
-                cv2.imwrite("datasets\\%s\\%s.jpg" % (emotion, filenumber), out)  # Write image
-            except:
-                pass  # If error, pass file
+    return gray
+
+
+happy_vec = get_landmarks(detect_face('emotions/happy/happy.jpg'))
+anger_vec = get_landmarks(detect_face('emotions/anger/angry.jpg'))
+contempt_vec = get_landmarks(detect_face('emotions/contempt/contempt.jpg'))
+sadness_vec = get_landmarks(detect_face('emotions/sadness/sad.jpg'))
+
+emotion_data = pd.Series((happy_vec, anger_vec, contempt_vec, sadness_vec), index=['happy', 'anger', 'contempt', 'sadness'])
+print(emotion_data[0])
+
+
+def order_data(emotion):
+    files = glob.glob("CK+48\\%s\\*" % emotion)
+    filenumber = 0
+    for f in files:
+        name = emotion + '_' + str(filenumber)
+        try:
+            out = detect_face(f)  # Resize face so all images have same size
+            cv2.imwrite("datasets\\%s.jpg" % name, out)  # Write image
+        except:
+            pass  # If error, pass file
         filenumber += 1  # Increment image number
 
 
-for emotion in emotions:
-    detect_faces(emotion)  # Call functiona
+# for emotion in emotions:
+#     order_data(emotion)
 
-data = {}
-emotions = ["neutral", "anger", "contempt", "disgust", "fear", "happy", "sadness", "surprise"]
-fishface = cv2.face.FisherFaceRecognizer_create() #createFisherFaceRecognizer() #Initialize fisher face classifier
-
-def get_files(emotion):  # Define function to get file list, randomly shuffle it and split 80/20
-    a_files = glob.glob("datasets\\%s\\*" % emotion)
-    random.shuffle(a_files)
-    training = a_files[:int(len(a_files) * 0.8)]  # get first 80% of file list
-    prediction = a_files[-int(len(a_files) * 0.2):]  # get last 20% of file list
+def get_files():  # Define function to get file list, randomly shuffle it and split 80/20
+    files = glob.glob('datasets/*.jpg')
+    random.shuffle(files)
+    training = files[:int(len(files) * 0.8)]  # get first 80% of file list
+    prediction = files[-int(len(files) * 0.2):]  # get last 20% of file list
     return training, prediction
 
 
 def make_sets():
     training_data = []
-    training_labels = []
-    prediction_data = []
-    prediction_labels = []
-    for nemotion in emotions:
-        training, prediction = get_files(nemotion)
-        # Append data to training and prediction list, and generate labels 0-7
-        for item in training:
-            image = cv2.imread(item)  # open image
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # convert to grayscale
-            training_data.append(gray)  # append image array to training data list
-            training_labels.append(emotions.index(nemotion))
+    test_data = []
 
-        for item in prediction:  # repeat above process for prediction set
+    training, prediction = get_files()
+    # Append data to training and prediction list
+    for item in training:
+        try:
             image = cv2.imread(item)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            prediction_data.append(gray)
-            prediction_labels.append(emotions.index(nemotion))
+            training_data.append(gray)
+            # block raising an exception
+        except:
+            pass  # doing nothing on exception
+    # append image array to training data list
 
-    return training_data, training_labels, prediction_data, prediction_labels
-
-def run_recognizer():
-    training_data, training_labels, prediction_data, prediction_labels = make_sets()
-
-    print("training fisher face classifier")
-    print("size of training set is:", len(training_labels), "images")
-    fishface.train(training_data, np.asarray(training_labels))
-
-    print("predicting classification set")
-    cnt = 0
-    ncorrect = 0
-    incorrect = 0
-    for image in prediction_data:
-        pred, conf = fishface.predict(image)
-        if pred == prediction_labels[cnt]:
-            ncorrect += 1
-            cnt += 1
-        else:
-            cv2.imwrite("dataset\\difficult\\%s_%s_%s.jpg" % (emotions[prediction_labels[cnt]], emotions[pred], cnt),
-                        image)  # <-- this one is new
-            incorrect += 1
-            cnt += 1
-    return ((100 * ncorrect) / (ncorrect + incorrect))
+    for item in prediction:
+        try:
+            image = cv2.imread(item)
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            test_data.append(gray)
+        # block raising an exception
+        except:
+            pass  # doing nothing on exception
+        # repeat above process for prediction set
+    return training_data, test_data
 
 
-# Now run it
-metascore = []
-for i in range(0, 10):
-    correct = run_recognizer()
-    print("got", correct, "percent correct!")
-    metascore.append(correct)
+training_d, test_d = make_sets()
 
-print("\n\nend score:", np.mean(metascore), "percent correct!")
+
+def train(t_files):
+    for f in t_files:
+            landmarks = get_landmarks(f)
+            # for emo in emotion_data:
+            #     if np.allclose(landmarks, emo, 10, 10):
+            #         emotion_data[emo] = (emotion_data[emo] + 100) / 2
+            #     else:
+            #         pass
+
+
+train(training_d)
+
+for emo in emotion_data:
+    print(emotion_data[emo])
+
+# print(emotion_data[0])
+# def run_recognizer():
+#     training_data, prediction_data = make_sets()
+#
+#     print("training fisher face classifier")
+#     print("size of training set is:", len(training_labels), "images")
+#     fishface.train(training_data, np.asarray(training_labels))
+#
+#     print("predicting classification set")
+#     cnt = 0
+#     ncorrect = 0
+#     incorrect = 0
+#     for image in prediction_data:
+#         pred, conf = fishface.predict(image)
+#         if pred == prediction_labels[cnt]:
+#             ncorrect += 1
+#             cnt += 1
+#         else:
+#             cv2.imwrite("dataset\\difficult\\%s_%s_%s.jpg" % (emotions[prediction_labels[cnt]], emotions[pred], cnt),
+#                         image)  # <-- this one is new
+#             incorrect += 1
+#             cnt += 1
+#     return ((100 * ncorrect) / (ncorrect + incorrect))
+#
+#
+# # Now run it
+# metascore = []
+# for i in range(0, 10):
+#     correct = run_recognizer()
+#     print("got", correct, "percent correct!")
+#     metascore.append(correct)
+#
+# print("\n\nend score:", np.mean(metascore), "percent correct!")
