@@ -9,6 +9,7 @@ import pandas as pd
 from jupyterlab_widgets import data
 import os
 from sklearn.neighbors import KNeighborsClassifier
+from operator import add
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
@@ -17,7 +18,8 @@ emotions = ['anger', 'contempt', 'happy', 'sadness']
 
 def get_landmarks(image):
     detections = detector(image, 1)
-    landmarks = []
+    landmarks_x = []
+    landmarks_y = []
     for k, d in enumerate(detections):  # For all detected face instances individually
         shape = predictor(image, d)  # Draw Facial Landmarks with the predictor class
         xlist = []
@@ -25,9 +27,9 @@ def get_landmarks(image):
         for i in range(1, 68):  # Store X and Y coordinates in two lists
             xlist.append(float(shape.part(i).x))
             ylist.append(float(shape.part(i).y))
-        landmarks.append({'face_x': xlist, 'face_y': ylist})
-
-    return landmarks
+        landmarks_x = xlist
+        landmarks_y = ylist
+    return [landmarks_x, landmarks_y]
 
 
 faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
@@ -77,7 +79,7 @@ contempt_vec = get_landmarks(detect_face('emotions/contempt/contempt.jpg'))
 sadness_vec = get_landmarks(detect_face('emotions/sadness/sad.jpg'))
 
 emotion_data = pd.Series((happy_vec, anger_vec, contempt_vec, sadness_vec), index=['happy', 'anger', 'contempt', 'sadness'])
-print(emotion_data[0])
+print(emotion_data)
 
 
 def order_data(emotion):
@@ -104,51 +106,98 @@ def get_files():  # Define function to get file list, randomly shuffle it and sp
     return training, prediction
 
 
-def make_sets():
-    training_data = []
-    test_data = []
-
-    training, prediction = get_files()
-    # Append data to training and prediction list
-    for item in training:
-        try:
-            image = cv2.imread(item)
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            training_data.append(gray)
-            # block raising an exception
-        except:
-            pass  # doing nothing on exception
-    # append image array to training data list
-
-    for item in prediction:
-        try:
-            image = cv2.imread(item)
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            test_data.append(gray)
-        # block raising an exception
-        except:
-            pass  # doing nothing on exception
-        # repeat above process for prediction set
-    return training_data, test_data
+training_data, test_data = get_files()
 
 
-training_d, test_d = make_sets()
+def train(t_data):
+    for f in t_data:
+        face = detect_face(f)
+        landmarks = get_landmarks(face)
+
+        filename = f
+        parts = filename.split('_')
+        name = parts[0]
+        parts2 = name.split('\\')
+        emotion = parts2[1]
 
 
-def train(t_files):
-    for f in t_files:
-            landmarks = get_landmarks(f)
+
+        # newList1 = [x+y for x in emotion_data[emotion][0]]
+        #
+        # emotion_data[emotion][0] = newList1
+        #
+        # newList2 = [x + 100 for x in emotion_data[emotion][1]]
+        # emotion_data[emotion][1] = newList2
+
+
+        # newList1 = [x / 2 for x in emotion_data[emotion][0]]
+        # newList2 = [x / 2 for x in emotion_data[emotion][1]]
+        #
+        # emotion_data[emotion][0] = newList1
+        # emotion_data[emotion][1] = newList2
+
+
+train(training_data)
+# print(train(training_data))
+
+print(emotion_data['happy'])
+
+
             # for emo in emotion_data:
             #     if np.allclose(landmarks, emo, 10, 10):
             #         emotion_data[emo] = (emotion_data[emo] + 100) / 2
             #     else:
             #         pass
+# def make_sets(training, test):
+#     training_data = []
+#     test_data = []
+#     # Append data to training and prediction list
+#     for item in training:
+#         try:
+#             image = cv2.imread(item)
+#             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#             training_data.append(gray)
+#             # block raising an exception
+#         except:
+#             pass  # doing nothing on exception
+#     # append image array to training data list
+#
+#     for item in test:
+#         try:
+#             image = cv2.imread(item)
+#             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#             test_data.append(gray)
+#         # block raising an exception
+#         except:
+#             pass  # doing nothing on exception
+#         # repeat above process for prediction set
+#     return training_data, test_data
+#
 
+# training_data, test_data = get_files()
+# training_set, test_set = make_sets(training_data, test_data)
+#
+# print(training_data)
 
-train(training_d)
+#
 
-for emo in emotion_data:
-    print(emotion_data[emo])
+#
+# def train(t_files, f_names):
+#     h = []
+#     d = []
+#     for f in f_names:
+#         filename = f
+#         parts = filename.split('_')
+#         emotion = parts[0]
+#         h.append(emotion)
+#         for x in h:
+#             filename = x
+#             parts = filename.split('\\')
+#             emotion = parts[1]
+#             h.append(emotion)
+
+# train(training_d)
+
 
 # print(emotion_data[0])
 # def run_recognizer():
