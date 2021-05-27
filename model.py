@@ -36,7 +36,8 @@ def detect_face(img_path):
         cap = cv2.VideoCapture(0)
         while True:
             ret, img = cap.read()
-
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            img = cv2.flip(img, 1)  # flip video image vertically
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             faces = faceDet.detectMultiScale(
                 gray,
@@ -45,6 +46,7 @@ def detect_face(img_path):
                 minSize=(20, 20)
             )
             for (x, y, w, h) in faces:
+
                 cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 gray = gray[y:y + h, x:x + w]
                 get_landmarks(img)
