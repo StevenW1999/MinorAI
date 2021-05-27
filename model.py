@@ -2,7 +2,7 @@ import math
 import data as data
 import cv2
 import dlib
-
+import time
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
@@ -23,7 +23,6 @@ def get_landmarks(image):
             cv2.circle(image, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=2)
         landmarks_x = xlist
         landmarks_y = ylist
-
 
     return [landmarks_x, landmarks_y]
 
@@ -50,7 +49,7 @@ def detect_face(img_path):
                 cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 gray = gray[y:y + h, x:x + w]
                 get_landmarks(img)
-                cv2.putText(img, predict(img), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+                cv2.putText(img, predict(gray), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
             cv2.imshow('video', img)
             k = cv2.waitKey(1)
@@ -58,6 +57,7 @@ def detect_face(img_path):
                 break
         cap.release()
         cv2.destroyAllWindows()
+        return 'close'
 
     else:
         frame = cv2.imread(img_path)  # Open image
@@ -80,7 +80,6 @@ def detect_face(img_path):
                 gray = gray[y:y + h, x:x + w]  # Cut the frame to size
 
         return gray
-
 
 
 def train(t_data):
