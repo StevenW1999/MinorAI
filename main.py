@@ -7,7 +7,7 @@ import data_collector as collector
 
 # for emotion in model.emotions:
 #     data.order_data(emotion)
-
+#
 # print('preparing to create dataset, please wait...')
 # time.sleep(5.0)
 # for emotion in model.emotions:
@@ -26,14 +26,14 @@ model.train(training_data)
 print('testing model...')
 model.test(test_data)
 
-print('preparing live emotion recognition...')
-time.sleep(5.0)
-
-if model.detect_face('video') == 'close':
-    if input('would you like to delete dataset? type: yes/no') == 'yes':
-        files = glob.glob('dataset/*.jpg')
-        for f in files:
-            os.remove(f)
-    else:
-        print('goodbye')
-        quit()
+# print('preparing live emotion recognition...')
+# time.sleep(5.0)
+#
+# if model.detect_face('video') == 'close':
+#     if input('would you like to delete dataset? type: yes/no') == 'yes':
+#         files = glob.glob('dataset/*.jpg')
+#         for f in files:
+#             os.remove(f)
+#     else:
+#         print('goodbye')
+#         quit()

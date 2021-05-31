@@ -34,13 +34,14 @@ def cap(emotion):
         faces = face_detector.detectMultiScale(gray, 1.3, 5)
 
         for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
             get_landmarks(img)
-            if k == 32:
-                cv2.imwrite("dataset/" + emotion + '_' +
-                            str(count) + ".jpg", gray[y:y + h, x:x + w])
-                print('picture :' + str(count) + ' of 30 taken')
-                count += 1
+            gray = gray[y:y + h, x:x + w]
+            out = cv2.resize(gray, (350, 350))
+            cv2.imwrite("dataset/" + emotion + '_' +
+                        str(count) + ".jpg", out)
+            print('picture :' + str(count) + ' of 30 taken')
+            count += 1
             cv2.imshow('image', img)
         if k == 27:
             break

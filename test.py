@@ -1,59 +1,55 @@
-import cv2
-import dlib
-import numpy as np
+from collections import Counter
+
 import pandas as pd
+import numpy as np
 
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-cap = cv2.VideoCapture(0)
-image = cv2.imread('paul.png')
+# happy_data = {'x': [1], 'y': [1], 'emotion': 'happy'}
+# sad_data = {'x': [1], 'y': [1],' emotion': 'happy'}
+# angry_data = {'x': [1], 'y': [1], 'emotion': 'happy'}
+# contempt_data = {'x': [1], 'y': [1], 'emotion': 'happy'}
+#
+# happy = pd.DataFrame(data=happy_data)
+# sad = pd.DataFrame(data=sad_data)
+# angry = pd.DataFrame(data=angry_data)
+# contempt = pd.DataFrame(data=contempt_data)
+#
+# t = pd.Series((happy, sad, angry, contempt), index=['happy', 'anger', 'contempt', 'sadness'])
+#
+# print(happy)
+#
+# t['happy'].loc[-1] = [1, 3]
+# happy.index = happy.index + 1
+# happy = happy.sort_index()
+# print(happy)
+distance = (1, 2)
+landmarks = [1,2]
+data = {'x': [], 'y': [], 'emotion': ''}
+t = pd.DataFrame(data=data)
+print(t)
+t.loc[-1] = [1,1, 'angry']
+t.index = t.index + 1
+t = t.sort_index()
+t.loc[-1] = [1,2, 'angry']
+t.index = t.index + 1
+t = t.sort_index()
+t.loc[-1] = [1,1, 'sad']
+t.index = t.index + 1
+t = t.sort_index()
+t.loc[-1] = [1,3, 'sad']
+t.index = t.index + 1
+t = t.sort_index()
+t.loc[-1] = [2,4, 'happy']
+t.index = t.index + 1
+t = t.sort_index()
 
-hog = dlib.get_frontal_face_detector()
+df2 = t.sort_values(by=['x', 'y'], ascending=[True, True], axis=0)[:5]
+counter = Counter(df2['emotion'])
+prediction = counter.most_common()[0][0]
+print(df2)
+if prediction == 'angry':
 
-face_landmark = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    print('prediction correct')
+else:
+    print('false')
 
-while True:
-    img = cap
-    gray = cv2.cvtColor(cv2.UMat(img), cv2.COLOR_BGR2GRAY)
-
-    faces = hog(gray)
-    for face in faces:
-
-        landmarks = face_landmark(gray, face)
-
-        def left_brow():
-            for n in range(18, 22):
-                x = landmarks.part(n).x
-                y = landmarks.part(n).y
-                cv2.circle(img, (x, y), 1, (255, 0, 0), 1)
-
-        def right_brow():
-            for n in range(23, 27):
-                x = landmarks.part(n).x
-                y = landmarks.part(n).y
-                cv2.circle(img, (x, y), 1, (255, 0, 0), 1)
-
-        def eyes():
-            for n in range(37, 48):
-                x = landmarks.part(n).x
-                y = landmarks.part(n).y
-                cv2.circle(img, (x, y), 1, (255, 0, 0), 1)
-
-        def mouth():
-            for n in range(49, 68):
-                x = landmarks.part(n).x
-                y = landmarks.part(n).y
-                cv2.circle(img, (x, y), 1, (255, 0, 0), 1)
-
-        left_brow()
-        right_brow()
-        eyes()
-        mouth()
-
-    cv2.imshow('img', img)
-
-    k = cv2.waitKey(1)
-    if k == 27:
-        break
-
-cap.release()

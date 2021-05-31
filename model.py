@@ -3,6 +3,8 @@ import data as data
 import cv2
 import dlib
 import time
+from collections import Counter
+import pandas as pd
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
@@ -34,6 +36,7 @@ def detect_face(img_path):
     if img_path == 'video':
         cap = cv2.VideoCapture(0)
         while True:
+            k = cv2.waitKey(1)
             ret, img = cap.read()
             img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
             img = cv2.flip(img, 1)  # flip video image vertically
@@ -45,14 +48,18 @@ def detect_face(img_path):
                 minSize=(20, 20)
             )
             for (x, y, w, h) in faces:
-
                 cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 gray = gray[y:y + h, x:x + w]
                 get_landmarks(img)
-                cv2.putText(img, predict(gray), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
 
             cv2.imshow('video', img)
-            k = cv2.waitKey(1)
+
+            if k == 32:
+                try:
+                    gray = cv2.resize(gray, (350, 350))
+                    print(predict(gray, 5))
+                except:
+                    print('error')
             if k == 27:  # press 'ESC' to quit
                 break
         cap.release()
@@ -77,7 +84,8 @@ def detect_face(img_path):
                 print("no face found in file: %s" % img_path)
             else:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                gray = gray[y:y + h, x:x + w]  # Cut the frame to size
+                gray = gray[y:y + h, x:x + w]
+                gray = cv2.resize(gray, (350, 350))
 
         return gray
 
@@ -94,16 +102,20 @@ def train(t_data):
             parts2 = name.split('\\')
             emotion = parts2[1]
 
-            new_x = [data.emotion_data[emotion][0][i] + landmarks[0][i] for i in range(len(data.emotion_data[emotion][0]))]
-            new_y = [data.emotion_data[emotion][1][i] + landmarks[1][i] for i in range(len(data.emotion_data[emotion][1]))]
-
-            new_x_average = [x / 2 for x in new_x]
-            new_y_average = [y / 2 for y in new_y]
-
-            data.emotion_data[emotion][0] = new_x_average
-            data.emotion_data[emotion][1] = new_y_average
+            data.emotion_data.loc[-1] = [landmarks[0], landmarks[1], emotion]
+            data.emotion_data.index = data.emotion_data.index + 1
+            data.emotion_data = data.emotion_data.sort_index()
+            #
+            # new_x = [data.emotion_data[emotion][0][i] + landmarks[0][i] for i in range(len(data.emotion_data[emotion][0]))]
+            # new_y = [data.emotion_data[emotion][1][i] + landmarks[1][i] for i in range(len(data.emotion_data[emotion][1]))]
+            #
+            # new_x_average = [x / 2 for x in new_x]
+            # new_y_average = [y / 2 for y in new_y]
+            #
+            # data.emotion_data[emotion][0] = new_x_average
+            # data.emotion_data[emotion][1] = new_y_average
         except:
-            print('no can do brother :')
+            print('error in "' + f)
 
 
 def euclidean_distance(rowx1, rowx2, rowy1, rowy2):
@@ -118,21 +130,24 @@ def euclidean_distance(rowx1, rowx2, rowy1, rowy2):
     return math.sqrt(distance_x), math.sqrt(distance_y)
 
 
-def predict(face):
+def predict(face, k):
     landmarks = get_landmarks(face)
     rowx = landmarks[0]
     rowy = landmarks[1]
-    distances = []
-    for emotion in emotions:
+    distance_d = {'distance_x': [], 'distance_y': [], 'emotion': ''}
+    df = pd.DataFrame(data=distance_d)
+    for i, r in data.emotion_data.iterrows():
         try:
-            distance = euclidean_distance(data.emotion_data[emotion][0], rowx, data.emotion_data[emotion][1], rowy)
-            distances.append(distance)
+            distance = euclidean_distance(data.emotion_data.iloc[i]['x'], rowx, data.emotion_data.iloc[i]['y'], rowy)
+            df.loc[-1] = [distance[0], distance[1], data.emotion_data.iloc[i]['emotion']]
+            df.index = df.index + 1
+            df = df.sort_index()
         except:
             return 'no idea'
-
-    min_val = min(distances)
-    index = distances.index(min_val)
-    return emotions[index]
+    df2 = df.sort_values(by=['distance_x', 'distance_y'], ascending=[True, True], axis=0)[:k]
+    counter = Counter(df2['emotion'])
+    prediction = counter.most_common()[0][0]
+    return prediction
 
 
 def test(p_data):
@@ -140,7 +155,7 @@ def test(p_data):
     incorrect = 0
     for f in p_data:
         face = detect_face(f)
-        predict_face = predict(face)
+        predict_face = predict(face, 5)
 
         filename = f
         parts = filename.split('_')
