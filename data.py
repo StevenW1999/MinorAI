@@ -4,7 +4,7 @@ import glob
 import pandas as pd
 import model
 
-
+# function for initial empty dataframe
 def initial_data():
     # happy_vec = model.get_landmarks(model.detect_face('dataset/happy_2.jpg'))
     # anger_vec = model.get_landmarks(model.detect_face('dataset/anger_19.jpg'))
@@ -28,28 +28,26 @@ def initial_data():
 
 emotion_data = initial_data()
 
-
+#function to get all files in the emotion folder and put them in a dataset folder with format [emotion] + _ + number +.jpg
 def order_data(emotion):
     files = glob.glob("CK+48\\%s\\*" % emotion)
-    filenumber = 0
+    nr = 0
     for f in files:
-        name = emotion + '_' + str(filenumber)
+        name = emotion + '_' + str(nr)
         try:
-            out = model.detect_face(f)  # Resize face so all images have same size
-            cv2.imwrite("dataset2\\%s.jpg" % name, out)  # Write image
+            out = model.detect_face(f)
+            cv2.imwrite("dataset2\\%s.jpg" % name, out)
         except:
-            pass  # If error, pass file
-        filenumber += 1  # Increment image number
+            pass
+        nr += 1
 
+# function to split datset in 75% training 25% test
 
-# for emotion in emotions:
-#     order_data(emotion)
-
-def get_files():  # Define function to get file list, randomly shuffle it and split 80/20
+def get_files():
     files = glob.glob('dataset2/*.jpg')
     random.shuffle(files)
-    training = files[:int(len(files) * 0.75)]  # get first 80% of file list
-    prediction = files[-int(len(files) * 0.25):]  # get last 20% of file list
+    training = files[:int(len(files) * 0.75)]
+    prediction = files[-int(len(files) * 0.25):]
     return training, prediction
 
 

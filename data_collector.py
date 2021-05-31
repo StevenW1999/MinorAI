@@ -7,9 +7,9 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 def get_landmarks(image):
     detections = detector(image, 1)
-    for k, d in enumerate(detections):  # For all detected face instances individually
-        shape = predictor(image, d)  # Draw Facial Landmarks with the predictor class
-        for i in range(1, 68):  # Store X and Y coordinates in two lists
+    for k, d in enumerate(detections):
+        shape = predictor(image, d)
+        for i in range(1, 68):
             cv2.circle(image, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=2)
 
 
@@ -28,14 +28,13 @@ def cap(emotion):
     while True:
         k = cv2.waitKey(1)
         ret, img = cam.read()
-        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        img = cv2.flip(img, 1)
+        # img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        # img = cv2.flip(img, 1)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_detector.detectMultiScale(gray, 1.3, 5)
 
         for (x, y, w, h) in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            get_landmarks(img)
             gray = gray[y:y + h, x:x + w]
             out = cv2.resize(gray, (350, 350))
             cv2.imwrite("dataset/" + emotion + '_' +

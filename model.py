@@ -6,6 +6,7 @@ import time
 from collections import Counter
 import pandas as pd
 
+#import detectors
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 emotions = ['anger', 'contempt', 'happy', 'sadness']
@@ -15,11 +16,11 @@ def get_landmarks(image):
     detections = detector(image, 1)
     landmarks_x = []
     landmarks_y = []
-    for k, d in enumerate(detections):  # For all detected face instances individually
-        shape = predictor(image, d)  # Draw Facial Landmarks with the predictor class
+    for k, d in enumerate(detections):
+        shape = predictor(image, d)
         xlist = []
         ylist = []
-        for i in range(1, 68):  # Store X and Y coordinates in two lists
+        for i in range(1, 68):
             xlist.append(float(shape.part(i).x))
             ylist.append(float(shape.part(i).y))
             cv2.circle(image, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=2)
@@ -38,8 +39,8 @@ def detect_face(img_path):
         while True:
             k = cv2.waitKey(1)
             ret, img = cap.read()
-            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            img = cv2.flip(img, 1)  # flip video image vertically
+            # img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            # img = cv2.flip(img, 1)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             faces = faceDet.detectMultiScale(
                 gray,
@@ -60,26 +61,26 @@ def detect_face(img_path):
                     print(predict(gray, 5))
                 except:
                     print('error')
-            if k == 27:  # press 'ESC' to quit
+            if k == 27:
                 break
         cap.release()
         cv2.destroyAllWindows()
         return 'close'
 
     else:
-        frame = cv2.imread(img_path)  # Open image
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale
+        frame = cv2.imread(img_path)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
                                         flags=cv2.CASCADE_SCALE_IMAGE)
 
-        # Go over detected faces, stop at first detected face, return empty if no face.
+
         if len(face) == 1:
             facefeatures = face
         else:
             facefeatures = ""
 
-        for (x, y, w, h) in facefeatures:  # get coordinates and size of rectangle containing face
+        for (x, y, w, h) in facefeatures:
             if facefeatures == "":
                 print("no face found in file: %s" % img_path)
             else:
