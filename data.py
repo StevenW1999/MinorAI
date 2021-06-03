@@ -59,6 +59,7 @@ def detect_face(img_path):
         shape = predictor(gray, d)
         for i in range(1, 68):
             cv2.circle(gray, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=1)
+    gray = cv2.resize(gray, (48, 48))
     cv2.imwrite(img_path, gray)
 
 
@@ -105,7 +106,9 @@ def get_files_CNN():
             detect_face(f)
             pixels = Image.open(f)
             pixels = list(pixels.getdata())
-            writer.writerow({'pixels': pixels, 'emotion': label, 'usage': 'train'})
+            string_ints = [str(x) for x in pixels]
+            str_of_ints = " ".join(string_ints)
+            writer.writerow({'pixels': str_of_ints, 'emotion': label, 'usage': 'train'})
 
         prediction = files[-int(len(files) * 0.25):]
         for f in prediction:
@@ -117,4 +120,6 @@ def get_files_CNN():
             pixels = Image.open(f)
             pixels = list(pixels.getdata())
             label = parts2[1]
-            writer.writerow({'pixels': pixels, 'emotion': label, 'usage': 'test'})
+            string_ints = [str(x) for x in pixels]
+            str_of_ints = " ".join(string_ints)
+            writer.writerow({'pixels': str_of_ints, 'emotion': label, 'usage': 'test'})
