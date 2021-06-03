@@ -3,6 +3,9 @@ import random
 import glob
 import pandas as pd
 import model
+import csv
+import dlib
+from PIL import Image
 
 # function for initial empty dataframe
 def initial_data():
@@ -24,6 +27,39 @@ def initial_data():
     data = {'x': [], 'y': [], 'emotion': ''}
     t = pd.DataFrame(data=data)
     return t
+
+#import detectors
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+emotions = ['anger', 'contempt', 'happy', 'sadness']
+
+faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+
+def detect_face(img_path):
+    frame = cv2.imread(img_path)
+
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
+                                        flags=cv2.CASCADE_SCALE_IMAGE)
+    if len(face) == 1:
+        facefeatures = face
+    else:
+        facefeatures = ""
+
+    for (x, y, w, h) in facefeatures:
+        if facefeatures == "":
+            print("no face found in file: %s" % img_path)
+        else:
+            gray = gray[y:y + h, x:x + w]
+
+    detections = detector(gray, 1)
+    for k, d in enumerate(detections):
+        shape = predictor(gray, d)
+        for i in range(1, 68):
+            cv2.circle(gray, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=1)
+    cv2.imwrite(img_path, gray)
 
 
 emotion_data = initial_data()
@@ -51,3 +87,34 @@ def get_files():
     return training, prediction
 
 
+def get_files_CNN():
+    files = glob.glob('dataset2/*.jpg')
+    random.shuffle(files)
+    with open('dataset.csv', mode='w') as csv_file:
+        fieldnames = ['pixels', 'emotion', 'usage']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        training_f = files[:int(len(files) * 0.75)]
+
+        for f in training_f:
+            filename = f
+            parts = filename.split('_')
+            name = parts[0]
+            parts2 = name.split('\\')
+            label = parts2[1]
+            detect_face(f)
+            pixels = Image.open(f)
+            pixels = list(pixels.getdata())
+            writer.writerow({'pixels': pixels, 'emotion': label, 'usage': 'train'})
+
+        prediction = files[-int(len(files) * 0.25):]
+        for f in prediction:
+            filename = f
+            parts = filename.split('_')
+            name = parts[0]
+            parts2 = name.split('\\')
+            detect_face(f)
+            pixels = Image.open(f)
+            pixels = list(pixels.getdata())
+            label = parts2[1]
+            writer.writerow({'pixels': pixels, 'emotion': label, 'usage': 'test'})

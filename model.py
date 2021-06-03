@@ -18,14 +18,9 @@ def get_landmarks(image):
     landmarks_y = []
     for k, d in enumerate(detections):
         shape = predictor(image, d)
-        xlist = []
-        ylist = []
         for i in range(1, 68):
-            xlist.append(float(shape.part(i).x))
-            ylist.append(float(shape.part(i).y))
             cv2.circle(image, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=2)
-        landmarks_x = xlist
-        landmarks_y = ylist
+
 
     return [landmarks_x, landmarks_y]
 
@@ -86,7 +81,7 @@ def detect_face(img_path):
             else:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 gray = gray[y:y + h, x:x + w]
-                gray = cv2.resize(gray, (350, 350))
+                gray = cv2.resize(gray, (48, 48))
 
         return gray
 
