@@ -92,34 +92,18 @@ def get_files_CNN():
     files = glob.glob('dataset2/*.jpg')
     random.shuffle(files)
     with open('dataset.csv', mode='w') as csv_file:
-        fieldnames = ['pixels', 'emotion', 'usage']
+        fieldnames = ['pixels', 'emotion']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
-        training_f = files[:int(len(files) * 0.75)]
-
-        for f in training_f:
+        for f in files:
             filename = f
             parts = filename.split('_')
             name = parts[0]
             parts2 = name.split('\\')
             label = parts2[1]
-            detect_face(f)
+            # detect_face(f)
             pixels = Image.open(f)
             pixels = list(pixels.getdata())
             string_ints = [str(x) for x in pixels]
             str_of_ints = " ".join(string_ints)
-            writer.writerow({'pixels': str_of_ints, 'emotion': label, 'usage': 'train'})
-
-        prediction = files[-int(len(files) * 0.25):]
-        for f in prediction:
-            filename = f
-            parts = filename.split('_')
-            name = parts[0]
-            parts2 = name.split('\\')
-            detect_face(f)
-            pixels = Image.open(f)
-            pixels = list(pixels.getdata())
-            label = parts2[1]
-            string_ints = [str(x) for x in pixels]
-            str_of_ints = " ".join(string_ints)
-            writer.writerow({'pixels': str_of_ints, 'emotion': label, 'usage': 'test'})
+            writer.writerow({'pixels': str_of_ints, 'emotion': label})
