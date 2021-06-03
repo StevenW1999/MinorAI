@@ -24,7 +24,7 @@ def initial_data():
     # contempt = pd.DataFrame(data=contempt_data)
     # t = pd.Series((happy, sad, angry, contempt), index=['happy', 'anger', 'contempt', 'sadness'])
 
-    data = {'x': [], 'y': [], 'emotion': ''}
+    data = {'pixels': [], 'emotion': ''}
     t = pd.DataFrame(data=data)
     return t
 
@@ -36,31 +36,7 @@ emotions = ['anger', 'contempt', 'happy', 'sadness']
 faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
 
-def detect_face(img_path):
-    frame = cv2.imread(img_path)
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    face = faceDet.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(5, 5),
-                                        flags=cv2.CASCADE_SCALE_IMAGE)
-    if len(face) == 1:
-        facefeatures = face
-    else:
-        facefeatures = ""
-
-    for (x, y, w, h) in facefeatures:
-        if facefeatures == "":
-            print("no face found in file: %s" % img_path)
-        else:
-            gray = gray[y:y + h, x:x + w]
-
-    detections = detector(gray, 1)
-    for k, d in enumerate(detections):
-        shape = predictor(gray, d)
-        for i in range(1, 68):
-            cv2.circle(gray, (shape.part(i).x, shape.part(i).y), 1, (0, 0, 255), thickness=1)
-    gray = cv2.resize(gray, (48, 48))
-    cv2.imwrite(img_path, gray)
 
 
 emotion_data = initial_data()
