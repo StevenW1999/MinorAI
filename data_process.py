@@ -2,10 +2,6 @@ import pandas as pd
 import numpy as np
 import warnings
 import cv2
-import data
-import model
-from PIL import Image
-import dlib
 warnings.filterwarnings("ignore")
 
 
@@ -50,6 +46,6 @@ def process_data(csv, type):
     train_data = (train_x, train_y)
     val_data = (val_x, val_y)
     if type == "CNN":
-        return train_data, val_data
+        return train_x, train_y, val_x, val_y
     if type == "KNN":
         return train_x, train_y_ne, val_x, val_y_ne
