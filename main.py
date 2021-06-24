@@ -1,39 +1,28 @@
-import data as data
-import model as model
-import time
-import glob
-import os
-import data_collector as collector
+import numpy as np
+import pandas as pd
 
-# for emotion in model.emotions:
-#     data.order_data(emotion)
-# data.get_files_CNN()
-# # print('preparing to create dataset, please wait...')
-# # time.sleep(5.0)
-# # for emotion in model.emotions:
-# #     if collector.cap(emotion) == 'done':
-# #         print('preparing next emotion, please wait...')
-# #         time.sleep(5.0)
-#
-# print('preparing training data and test data...')
-# data.initial_data()
-# training_data, test_data = data.get_files()
-# time.sleep(5.0)
-#
-# print('training model...')
-# model.train(training_data)
-#
-# print('testing model...')
-# model.test(test_data)
-#
-# print('preparing live emotion recognition...')
-# time.sleep(5.0)
-#
-# # if model.detect_face('video') == 'close':
-# #     if input('would you like to delete dataset? type: yes/no') == 'yes':
-# #         files = glob.glob('dataset/*.jpg')
-# #         for f in files:
-# #             os.remove(f)
-# #     else:
-# #         print('goodbye')
-# #         quit()
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+data = pd.read_csv("dataset.csv")
+df = pd.DataFrame(data=data)
+pixels = df["pixels"].str.split()
+
+count = 0
+for i in pixels:
+    ci = 0
+    for b in i:
+        i[ci] = int(b)
+        ci += 1
+    pixels[count] = i
+    count += 1
+
+x = pixels.tolist()
+y = df['emotion']
+
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+clf = SVC(kernel='poly')
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+print(accuracy_score(y_test, y_pred))

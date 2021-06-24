@@ -12,7 +12,7 @@ def process_data(csv, type):
     width, height = 48, 48
     faces = []
     for pixel_sequence in pixels:
-        face = [int(pixel) for pixel in pixel_sequence.split(' ')]  # Splitting the string by space character as a list
+        face = [int(pixel) for pixel in pixel_sequence.split(' ')]# Splitting the string by space character as a list
         face = np.asarray(face).reshape(width, height)  # converting the list to numpy array in size of 48*48
         face = cv2.resize(face.astype('uint8'),
                           image_size)  # resize the image to have 48 cols (width) and 48 rows (height)
