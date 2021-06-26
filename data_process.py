@@ -45,7 +45,7 @@ def process_data(csv, type):
     faces = np.expand_dims(faces, -1)
 
     # one hot encode the emotions
-    emotions = pd.get_dummies(df['emotion'])
+    emotions = pd.get_dummies(df['emotion']).to_numpy()
 
     # non encoded emotions
     non_encoded_emotions = df['emotion']
