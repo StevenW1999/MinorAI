@@ -64,40 +64,40 @@ hist_model_1 = model_1.fit_generator(data_generator.flow(X_train, y_train,
 
 model_1.evaluate(X_test, y_test, verbose=1)
 
-
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-
-faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-cap = cv2.VideoCapture(0)
-
-while True:
-    string = 'PRESS SPACE TO TAKE A PICTURE'
-    k = cv2.waitKey(1)
-    ret, img = cap.read()
-    # img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    # img = cv2.flip(img, 1)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = faceDet.detectMultiScale(gray, 1.3, 5)
-    for (x, y, w, h) in faces:
-        rec = cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        gray = gray[y:y + h, x:x + w]
-
-
-    cv2.imshow('video', img)
-    if k == 32:
-        try:
-            gray = cv2.resize(gray, (48, 48))
-            cv2.imwrite("liveCapture/" +
-                        'LIVECAPTURE' + ".jpg", gray)
-            break
-        except:
-            print('error')
-    if k == 27:
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+#
+# detector = dlib.get_frontal_face_detector()
+# predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+#
+# faceDet = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+# cap = cv2.VideoCapture(0)
+#
+# while True:
+#     string = 'PRESS SPACE TO TAKE A PICTURE'
+#     k = cv2.waitKey(1)
+#     ret, img = cap.read()
+#     # img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+#     # img = cv2.flip(img, 1)
+#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     faces = faceDet.detectMultiScale(gray, 1.3, 5)
+#     for (x, y, w, h) in faces:
+#         rec = cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+#         gray = gray[y:y + h, x:x + w]
+#
+#
+#     cv2.imshow('video', img)
+#     if k == 32:
+#         try:
+#             gray = cv2.resize(gray, (48, 48))
+#             cv2.imwrite("liveCapture/" +
+#                         'LIVECAPTURE' + ".jpg", gray)
+#             break
+#         except:
+#             print('error')
+#     if k == 27:
+#         break
+#
+# cap.release()
+# cv2.destroyAllWindows()
 
 pixels = Image.open('liveCapture/LIVECAPTURE.jpg')
 pixels = list(pixels.getdata())
