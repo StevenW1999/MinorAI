@@ -8,3 +8,5 @@ CK+48/happy/*
 CK+48/sadness/*
 dataset/*
 testset/*
+*config.py
+livecapture/*
