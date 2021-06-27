@@ -11,3 +11,4 @@ testset/*
 *config.py
 livecapture/*
 .vscode/*
+__pycache__/*
