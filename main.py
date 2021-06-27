@@ -25,27 +25,19 @@ warnings.filterwarnings("ignore")
 
 x,y, a = data_process.process_data('dataset.csv', "CNN")
 
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 val_data = (X_test,y_test)
 
 input_shape=(48, 48, 1)
 num_classes = 4
 
 model_1 = Sequential()
-
-## 5x5 convolution with 2x2 stride and 32 filters
-model_1.add(Conv2D(32, (5, 5), strides = (2,2), padding='same', input_shape=input_shape))
+model_1.add(Conv2D(32, (5, 5), strides = (1,1), padding='same', input_shape=input_shape))
 model_1.add(Activation('relu'))
-
-## Another 5x5 convolution with 2x2 stride and 32 filters
-model_1.add(Conv2D(32, (5, 5), strides = (2,2)))
+model_1.add(Conv2D(32, (5, 5), strides = (1,1)))
 model_1.add(Activation('relu'))
-
-## 2x2 max pooling reduces to 3 x 3 x 32
 model_1.add(MaxPooling2D(pool_size=(2, 2)))
 model_1.add(Dropout(0.25))
-
-## Flatten turns 3x3x32 into 288x1
 model_1.add(Flatten())
 model_1.add(Dense(512))
 model_1.add(Activation('relu'))
@@ -53,13 +45,12 @@ model_1.add(Dropout(0.5))
 model_1.add(Dense(num_classes))
 model_1.add(Activation('softmax'))
 
+model_1.summary()
+
 data_generator = ImageDataGenerator(
-                        featurewise_center=False,
-                        featurewise_std_normalization=False,
                         rotation_range=10,
                         width_shift_range=0.1,
                         height_shift_range=0.1,
-                        zoom_range=.1,
                         horizontal_flip=True)
 batch_size = 32
 opt = RMSprop(lr=0.0005, decay=1e-6)
@@ -128,26 +119,6 @@ x = x / 255.0
 x = x - 0.5
 x = x * 2.0
 
-# def undummify(df, prefix_sep="_"):
-#     cols2collapse = {
-#         item.split(prefix_sep)[0]: (prefix_sep in item) for item in df.columns
-#     }
-#     series_list = []
-#     for col, needs_to_collapse in cols2collapse.items():
-#         if needs_to_collapse:
-#             undummified = (
-#                 df.filter(like=col)
-#                 .idxmax(axis=1)
-#                 .apply(lambda x: x.split(prefix_sep, maxsplit=1)[1])
-#                 .rename(col)
-#             )
-#             series_list.append(undummified)
-#         else:
-#             series_list.append(df[col])
-#     undummified_df = pd.concat(series_list, axis=1)
-#     return undummified_df
-# df2 = undummify(y)
-# print(df2)
 y_pred = model_1.predict_classes(x)
 
 mood = ''
