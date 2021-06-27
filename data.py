@@ -90,7 +90,7 @@ def get_files():
     return training, prediction
 
 
-def get_files_CNN():
+def write_csv():
     files = glob.glob('dataset3/*.jpg')
     random.shuffle(files)
     with open('dataset2.csv', mode='w') as csv_file:
