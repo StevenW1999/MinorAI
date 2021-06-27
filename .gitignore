@@ -10,3 +10,4 @@ dataset/*
 testset/*
 *config.py
 livecapture/*
+.vscode/*
